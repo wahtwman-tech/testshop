@@ -10,6 +10,28 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: sheep
+    description: Sheep listing operations
+  - name: auth
+    description: Customer authentication
+  - name: profile
+    description: Customer profile management
+  - name: addresses
+    description: Customer delivery addresses
+  - name: orders
+    description: Checkout and order requests
+  - name: content
+    description: Public site content
+  - name: admin-auth
+    description: Admin authentication
+  - name: admin-sheep
+    description: Admin product management
+  - name: admin-orders
+    description: Admin order management
+  - name: admin-content
+    description: Admin site content management
+  - name: admin-customers
+    description: Admin customer visibility
 paths:
   /healthz:
     get:
@@ -24,6 +46,696 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ---------- Sheep (public catalog) ----------
+  /sheep:
+    get:
+      operationId: listSheep
+      tags: [sheep]
+      summary: List all sheep available for sale
+      responses:
+        "200":
+          description: List of sheep
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sheep"
+  /sheep/{id}:
+    get:
+      operationId: getSheep
+      tags: [sheep]
+      summary: Get a single sheep by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sheep found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sheep"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /sheep/stats/summary:
+    get:
+      operationId: getSheepStats
+      tags: [sheep]
+      summary: Aggregate stats for the storefront (counts, price range, breed breakdown)
+      responses:
+        "200":
+          description: Storefront stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SheepStats"
+
+  # ---------- Public site content ----------
+  /content:
+    get:
+      operationId: listContent
+      tags: [content]
+      summary: List public site content key/value pairs
+      responses:
+        "200":
+          description: Site content
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SiteContentItem"
+
+  # ---------- Customer auth ----------
+  /auth/register:
+    post:
+      operationId: registerCustomer
+      tags: [auth]
+      summary: Register a new customer account and send a verification email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered, verification email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/verify-email:
+    post:
+      operationId: verifyEmail
+      tags: [auth]
+      summary: Verify a customer email using the token from the activation link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailInput"
+      responses:
+        "200":
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/login:
+    post:
+      operationId: loginCustomer
+      tags: [auth]
+      summary: Log in a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/logout:
+    post:
+      operationId: logoutCustomer
+      tags: [auth]
+      summary: Log out the current customer
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+  /auth/me:
+    get:
+      operationId: getCurrentCustomer
+      tags: [auth]
+      summary: Get the currently logged-in customer
+      responses:
+        "200":
+          description: Current customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ---------- Customer profile ----------
+  /profile:
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update the current customer's profile (name, phone, email)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /profile/password:
+    post:
+      operationId: changeCustomerPassword
+      tags: [profile]
+      summary: Change the current customer's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChangeInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Current password incorrect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ---------- Customer addresses ----------
+  /addresses:
+    get:
+      operationId: listAddresses
+      tags: [addresses]
+      summary: List the current customer's saved addresses
+      responses:
+        "200":
+          description: Addresses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Address"
+    post:
+      operationId: createAddress
+      tags: [addresses]
+      summary: Add a new delivery address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressInput"
+      responses:
+        "201":
+          description: Address created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+  /addresses/{id}:
+    patch:
+      operationId: updateAddress
+      tags: [addresses]
+      summary: Update a delivery address
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressUpdate"
+      responses:
+        "200":
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAddress
+      tags: [addresses]
+      summary: Delete a delivery address
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ---------- Checkout / customer orders ----------
+  /checkout:
+    post:
+      operationId: createCheckout
+      tags: [orders]
+      summary: Start a checkout - creates an order awaiting a payment method
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutInput"
+      responses:
+        "201":
+          description: Order created, awaiting payment method
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Invalid input or insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Sheep or address not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List the current customer's orders
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get one of the current customer's orders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /orders/{id}/pay-cod:
+    post:
+      operationId: payOrderCod
+      tags: [orders]
+      summary: Confirm the order with cash-on-delivery payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order confirmed, processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /orders/{id}/pay-card:
+    post:
+      operationId: payOrderCard
+      tags: [orders]
+      summary: Attempt to pay by card (currently unavailable, records the attempt)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Card payment unavailable, order updated with the attempted method
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ---------- Admin auth ----------
+  /admin/login:
+    post:
+      operationId: loginAdmin
+      tags: [admin-auth]
+      summary: Log in to the admin dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/logout:
+    post:
+      operationId: logoutAdmin
+      tags: [admin-auth]
+      summary: Log out of the admin dashboard
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+  /admin/me:
+    get:
+      operationId: getCurrentAdmin
+      tags: [admin-auth]
+      summary: Get the currently logged-in admin
+      responses:
+        "200":
+          description: Current admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/change-password:
+    post:
+      operationId: changeAdminPassword
+      tags: [admin-auth]
+      summary: Change the admin password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChangeInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Current password incorrect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ---------- Admin sheep management ----------
+  /admin/sheep:
+    get:
+      operationId: adminListSheep
+      tags: [admin-sheep]
+      summary: List all sheep (including unavailable) for the admin dashboard
+      responses:
+        "200":
+          description: List of sheep
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sheep"
+    post:
+      operationId: adminCreateSheep
+      tags: [admin-sheep]
+      summary: Create a new sheep product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SheepInput"
+      responses:
+        "201":
+          description: Sheep created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sheep"
+  /admin/sheep/{id}:
+    patch:
+      operationId: adminUpdateSheep
+      tags: [admin-sheep]
+      summary: Update a sheep product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SheepUpdate"
+      responses:
+        "200":
+          description: Sheep updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sheep"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: adminDeleteSheep
+      tags: [admin-sheep]
+      summary: Delete a sheep product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ---------- Admin orders ----------
+  /admin/orders:
+    get:
+      operationId: adminListOrders
+      tags: [admin-orders]
+      summary: List every order across all customers
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminOrder"
+  /admin/orders/{id}:
+    patch:
+      operationId: adminUpdateOrder
+      tags: [admin-orders]
+      summary: Update an order's status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusUpdate"
+      responses:
+        "200":
+          description: Order updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrder"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ---------- Admin content management ----------
+  /admin/content:
+    get:
+      operationId: adminListContent
+      tags: [admin-content]
+      summary: List all site content key/value pairs
+      responses:
+        "200":
+          description: Site content
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SiteContentItem"
+    put:
+      operationId: adminUpdateContent
+      tags: [admin-content]
+      summary: Bulk upsert site content key/value pairs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/SiteContentItem"
+      responses:
+        "200":
+          description: Updated site content
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SiteContentItem"
+
+  # ---------- Admin customers ----------
+  /admin/customers:
+    get:
+      operationId: adminListCustomers
+      tags: [admin-customers]
+      summary: List all registered customers
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
 components:
   schemas:
     HealthStatus:
@@ -33,4 +745,388 @@ components:
           type: string
       required:
         - status
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
 
+    # ---------- Sheep ----------
+    Sheep:
+      type: object
+      required:
+        [id, name, breed, ageMonths, weightKg, price, imageUrl, description, available, stockQuantity]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        breed:
+          type: string
+        ageMonths:
+          type: integer
+        weightKg:
+          type: number
+        price:
+          type: number
+        imageUrl:
+          type: string
+        description:
+          type: string
+        available:
+          type: boolean
+        stockQuantity:
+          type: integer
+    SheepInput:
+      type: object
+      required: [name, breed, ageMonths, weightKg, price, imageUrl, description, stockQuantity]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        breed:
+          type: string
+          minLength: 1
+        ageMonths:
+          type: integer
+          minimum: 0
+        weightKg:
+          type: number
+          minimum: 0
+        price:
+          type: number
+          minimum: 0
+        imageUrl:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        stockQuantity:
+          type: integer
+          minimum: 0
+    SheepUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        breed:
+          type: string
+          minLength: 1
+        ageMonths:
+          type: integer
+          minimum: 0
+        weightKg:
+          type: number
+          minimum: 0
+        price:
+          type: number
+          minimum: 0
+        imageUrl:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        stockQuantity:
+          type: integer
+          minimum: 0
+    SheepStats:
+      type: object
+      required: [totalSheep, availableSheep, minPrice, maxPrice, breedBreakdown]
+      properties:
+        totalSheep:
+          type: integer
+        availableSheep:
+          type: integer
+        minPrice:
+          type: number
+        maxPrice:
+          type: number
+        breedBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/BreedCount"
+    BreedCount:
+      type: object
+      required: [breed, count]
+      properties:
+        breed:
+          type: string
+        count:
+          type: integer
+
+    # ---------- Site content ----------
+    SiteContentItem:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+
+    # ---------- Customer auth ----------
+    RegisterInput:
+      type: object
+      required: [name, email, phone, password]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+        phone:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 8
+    VerifyEmailInput:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    User:
+      type: object
+      required: [id, name, email, phone, emailVerified, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        emailVerified:
+          type: boolean
+        createdAt:
+          type: string
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        email:
+          type: string
+    PasswordChangeInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+
+    # ---------- Addresses ----------
+    Address:
+      type: object
+      required: [id, label, city, addressLine, notes, isDefault, createdAt]
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        city:
+          type: string
+        addressLine:
+          type: string
+        notes:
+          type: ["string", "null"]
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+    AddressInput:
+      type: object
+      required: [label, city, addressLine]
+      properties:
+        label:
+          type: string
+          minLength: 1
+        city:
+          type: string
+          minLength: 1
+        addressLine:
+          type: string
+          minLength: 1
+        notes:
+          type: string
+        isDefault:
+          type: boolean
+    AddressUpdate:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+        city:
+          type: string
+          minLength: 1
+        addressLine:
+          type: string
+          minLength: 1
+        notes:
+          type: string
+        isDefault:
+          type: boolean
+
+    # ---------- Orders ----------
+    CheckoutInput:
+      type: object
+      required: [sheepId, quantity, addressId]
+      properties:
+        sheepId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        addressId:
+          type: integer
+        note:
+          type: string
+    OrderSheepSummary:
+      type: object
+      required: [id, name, imageUrl, breed]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        imageUrl:
+          type: string
+        breed:
+          type: string
+    OrderAddressSummary:
+      type: object
+      required: [id, label, city, addressLine]
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        city:
+          type: string
+        addressLine:
+          type: string
+    Order:
+      type: object
+      required:
+        [id, sheepId, addressId, quantity, unitPrice, totalAmount, paymentMethod, note, status, createdAt, updatedAt, sheep, address]
+      properties:
+        id:
+          type: integer
+        sheepId:
+          type: integer
+        addressId:
+          type: integer
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        totalAmount:
+          type: number
+        paymentMethod:
+          type: ["string", "null"]
+        note:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        sheep:
+          $ref: "#/components/schemas/OrderSheepSummary"
+        address:
+          $ref: "#/components/schemas/OrderAddressSummary"
+    AdminOrder:
+      type: object
+      required:
+        [id, sheepId, addressId, quantity, unitPrice, totalAmount, paymentMethod, note, status, createdAt, updatedAt, sheep, address, customer]
+      properties:
+        id:
+          type: integer
+        sheepId:
+          type: integer
+        addressId:
+          type: integer
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        totalAmount:
+          type: number
+        paymentMethod:
+          type: ["string", "null"]
+        note:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        sheep:
+          $ref: "#/components/schemas/OrderSheepSummary"
+        address:
+          $ref: "#/components/schemas/OrderAddressSummary"
+        customer:
+          $ref: "#/components/schemas/OrderCustomerSummary"
+    OrderCustomerSummary:
+      type: object
+      required: [id, name, phone, email]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+    OrderStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    # ---------- Admin auth ----------
+    AdminLoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AdminUser:
+      type: object
+      required: [id, username]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string

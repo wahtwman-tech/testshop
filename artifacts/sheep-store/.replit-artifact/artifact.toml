@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "متجر الخراف"
+version = "1.0.0"
+id = "artifacts/sheep-store"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19395
+
+[services.development]
+run = "pnpm --filter @workspace/sheep-store run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sheep-store", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/sheep-store/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19395"
+BASE_PATH = "/"
