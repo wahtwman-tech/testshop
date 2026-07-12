@@ -13,8 +13,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-06-24.dahlia" as any,
 });
 
-// Get base URL from environment or use a default
-const getBaseUrl = () => process.env.BASE_URL || "http://localhost:3000";
+// Get base URL from environment - Railway provides RAILWAY_PUBLIC_DOMAIN
+const getBaseUrl = () => {
+  // Railway provides these environment variables
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  }
+  if (process.env.BASE_URL) {
+    return process.env.BASE_URL;
+  }
+  // Fallback for local development
+  return "http://localhost:3000";
+};
 
 // Confirm order for Cash on Delivery
 router.post("/cod", requireCustomerAuth, async (req: Request, res: Response) => {
