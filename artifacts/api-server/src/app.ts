@@ -52,7 +52,7 @@ app.get("/health", (req, res) => {
 });
 
 // Serve the frontend app for all other routes (SPA support)
-app.get("*", (req, res) => {
+app.get("(.*)", (req, res) => {
   res.sendFile(path.join(frontendDistPath, "index.html"), (err) => {
     if (err) {
       res.status(404).send("Frontend not built. Run 'pnpm run build' first.");
