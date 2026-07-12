@@ -11,6 +11,7 @@ import Orders from '@/pages/orders';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
 import VerifyEmail from '@/pages/verify-email';
+import Profile from '@/pages/profile';
 import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient({
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/sheep/:id" component={SheepDetails} />
       <Route path="/orders" component={Orders} />
+      <Route path="/profile" component={Profile} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/verify-email" component={VerifyEmail} />
