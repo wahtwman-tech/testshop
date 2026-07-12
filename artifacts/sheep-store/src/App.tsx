@@ -4,6 +4,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout';
 import { CustomerAuthProvider } from '@/lib/customer-auth';
+import { DemoBanner } from '@/components/demo-banner';
 
 import Home from '@/pages/home';
 import SheepDetails from '@/pages/sheep-details';
@@ -44,6 +45,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CustomerAuthProvider>
         <TooltipProvider>
+          <DemoBanner />
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
             <Layout>
               <Router />
