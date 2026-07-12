@@ -12,6 +12,7 @@ import adminSheepRouter from "./admin-sheep";
 import adminOrdersRouter from "./admin-orders";
 import adminContentRouter from "./admin-content";
 import adminCustomersRouter from "./admin-customers";
+import adminSheepNamesRouter from "./admin-sheep-names";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(adminSheepRouter);
 router.use(adminOrdersRouter);
 router.use(adminContentRouter);
 router.use(adminCustomersRouter);
+router.use(adminSheepNamesRouter);
 
 export default router;
