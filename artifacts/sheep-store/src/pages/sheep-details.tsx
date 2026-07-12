@@ -4,6 +4,7 @@ import {
   useCreateCheckout,
   useListAddresses,
   getGetSheepQueryKey,
+  getListAddressesQueryKey,
   getListOrdersQueryKey,
 } from '@workspace/api-client-react';
 import { z } from 'zod';
@@ -53,7 +54,7 @@ export default function SheepDetails() {
   });
 
   const { data: addresses } = useListAddresses({
-    query: { enabled: isAuthenticated },
+    query: { enabled: isAuthenticated, queryKey: getListAddressesQueryKey() },
   });
 
   const createCheckout = useCreateCheckout();

@@ -1,9 +1,9 @@
 import React, { createContext, useContext } from 'react';
 import { useGetCurrentCustomer, getGetCurrentCustomerQueryKey } from '@workspace/api-client-react';
-import type { GetCurrentCustomerResponse } from '@workspace/api-client-react';
+import type { User } from '@workspace/api-client-react';
 
 type CustomerAuthContextValue = {
-  customer: GetCurrentCustomerResponse | undefined;
+  customer: User | undefined;
   isLoading: boolean;
   isAuthenticated: boolean;
 };

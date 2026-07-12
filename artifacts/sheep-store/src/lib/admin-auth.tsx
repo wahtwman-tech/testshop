@@ -1,9 +1,9 @@
 import React, { createContext, useContext } from 'react';
 import { useGetCurrentAdmin, getGetCurrentAdminQueryKey } from '@workspace/api-client-react';
-import type { GetCurrentAdminResponse } from '@workspace/api-client-react';
+import type { AdminUser } from '@workspace/api-client-react';
 
 type AdminAuthContextValue = {
-  admin: GetCurrentAdminResponse | undefined;
+  admin: AdminUser | undefined;
   isLoading: boolean;
   isAuthenticated: boolean;
 };
