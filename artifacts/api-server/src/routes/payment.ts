@@ -19,7 +19,7 @@ const getBaseUrl = () => process.env.BASE_URL || "http://localhost:3000";
 // Confirm order for Cash on Delivery
 router.post("/cod", requireCustomerAuth, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.customerId!;
     const { orderId } = req.body as { orderId: number };
 
     if (!orderId) {
@@ -67,7 +67,7 @@ router.post("/cod", requireCustomerAuth, async (req: Request, res: Response) => 
 // Create Stripe Checkout Session
 router.post("/create-checkout-session", requireCustomerAuth, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.customerId!;
     const { orderId } = req.body as { orderId: number };
 
     if (!orderId) {
@@ -194,6 +194,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
 // Verify payment status
 router.get("/verify/:sessionId", requireCustomerAuth, async (req: Request, res: Response) => {
   try {
+    req.customerId; // Ensure user is authenticated
     const sessionId = req.params.sessionId as string;
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);

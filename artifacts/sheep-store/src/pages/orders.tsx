@@ -368,9 +368,12 @@ function OrderDetails({ orderId, onBack }: OrderDetailsProps) {
               </div>
 
               {selectedPayment === 'card' && (
-                <div className="flex items-center justify-center gap-4 pt-4 border-t">
-                  <img src="/visa.svg" alt="Visa" className="h-6" />
-                  <img src="/mastercard.svg" alt="Mastercard" className="h-6" />
+                <div className="flex items-center justify-center gap-4 pt-4 border-t text-muted-foreground text-sm">
+                  <span>Visa</span>
+                  <span>•</span>
+                  <span>Mastercard</span>
+                  <span>•</span>
+                  <span>مدعوم</span>
                 </div>
               )}
             </CardContent>
