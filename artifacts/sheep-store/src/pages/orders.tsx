@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useListOrders, getListOrdersQueryKey, useGetOrder } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
+import { Link, useSearchParams } from 'wouter';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { useCustomerAuth } from '@/lib/customer-auth';
@@ -18,11 +18,11 @@ import {
   Calendar,
   CreditCard,
   Truck,
-  Smartphone,
   Check,
   X,
   ChevronRight,
   Copy,
+  Loader2,
 } from 'lucide-react';
 
 type OrderStatus = 'pending_payment' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -60,7 +60,7 @@ interface OrderDetailsProps {
 }
 
 function OrderDetails({ orderId, onBack }: OrderDetailsProps) {
-  const { data: order, isLoading } = useGetOrder(orderId);
+  const { data: order, isLoading, refetch } = useGetOrder(orderId);
 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cod');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -69,13 +69,47 @@ function OrderDetails({ orderId, onBack }: OrderDetailsProps) {
   const handlePayment = async () => {
     setIsProcessing(true);
     
-    // محاكاة عملية الدفع
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast.success('تم إتمام الدفع بنجاح!');
-    setShowPaymentModal(false);
-    setIsProcessing(false);
-    // يمكن إضافة إعادة تحميل البيانات هنا
+    try {
+      if (selectedPayment === 'cod') {
+        // الدفع عند الاستلام - تأكيد بسيط
+        const response = await fetch('/api/payment/cod', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ orderId }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('فشل تأكيد الطلب');
+        }
+        
+        toast.success('تم تأكيد الطلب بنجاح! سيتم الدفع عند الاستلام');
+        setShowPaymentModal(false);
+        refetch();
+      } else {
+        // الدفع بالبطاقة - توجيه لـ Stripe
+        const response = await fetch('/api/payment/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ orderId }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.url) {
+          // توجيه العميل لصفحة الدفع
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'فشل إنشاء جلسة الدفع');
+        }
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء الدفع');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const copyOrderId = () => {
@@ -349,11 +383,28 @@ function OrderDetails({ orderId, onBack }: OrderDetailsProps) {
 
 export default function Orders() {
   const { isAuthenticated, isLoading: authLoading } = useCustomerAuth();
-  const { data: orders, isLoading } = useListOrders({
+  const { data: orders, isLoading, refetch } = useListOrders({
     query: { queryKey: getListOrdersQueryKey(), enabled: isAuthenticated },
   });
   
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [searchParams] = useSearchParams();
+  
+  // Handle payment result from URL
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    const orderId = searchParams.get('order_id');
+    
+    if (paymentStatus === 'success') {
+      toast.success('تم الدفع بنجاح! شكراً لك');
+      refetch();
+      // Clear URL params
+      window.history.replaceState({}, '', '/orders');
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('تم إلغاء عملية الدفع');
+      window.history.replaceState({}, '', '/orders');
+    }
+  }, [searchParams, refetch]);
 
   if (authLoading) {
     return (
