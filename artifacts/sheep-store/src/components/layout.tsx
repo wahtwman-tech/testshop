@@ -20,7 +20,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 text-primary font-bold text-xl transition-opacity hover:opacity-80">
               <Store className="h-6 w-6" />
-              <span>مراعينا</span>
+              <span>متجر تجريبي</span>
             </Link>
             
             <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <footer className="border-t border-border bg-card text-muted-foreground py-8 mt-auto">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-          <p>© {new Date().getFullYear()} متجر مراعينا للخراف. جميع الحقوق محفوظة.</p>
+          <p>© {new Date().getFullYear()}   هذا المتجر تجريبي وليس حقيقي</p>
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1">
               حالة النظام: 
