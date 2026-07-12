@@ -129,8 +129,8 @@ router.post("/create-checkout-session", requireCustomerAuth, async (req: Request
         },
       ],
       mode: "payment",
-      success_url: `${baseUrl}/orders?payment=success&session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-      cancel_url: `${baseUrl}/orders?payment=cancelled&order_id=${orderId}`,
+      success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
+      cancel_url: `${baseUrl}/payment/failure?order_id=${orderId}`,
       customer_email: user?.email || undefined,
       metadata: {
         orderId: orderId.toString(),

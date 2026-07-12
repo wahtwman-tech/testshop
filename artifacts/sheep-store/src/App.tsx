@@ -12,6 +12,8 @@ import Login from '@/pages/login';
 import Register from '@/pages/register';
 import VerifyEmail from '@/pages/verify-email';
 import Profile from '@/pages/profile';
+import PaymentSuccess from '@/pages/payment-success';
+import PaymentFailure from '@/pages/payment-failure';
 import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient({
@@ -30,6 +32,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/payment/failure" component={PaymentFailure} />
       <Route component={NotFound} />
     </Switch>
   );
