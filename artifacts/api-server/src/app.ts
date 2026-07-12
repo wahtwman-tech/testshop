@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -13,8 +14,28 @@ const app: Express = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Path to the frontend build (sheep-store)
-const frontendDistPath = path.resolve(__dirname, "..", "sheep-store", "dist", "public");
+// Path to the frontend build - try multiple locations
+const possiblePaths = [
+  path.resolve(__dirname, "sheep-store", "dist", "public"),  // Bundled with api-server
+  path.resolve(__dirname, "..", "sheep-store", "dist", "public"),
+  path.resolve("/app", "artifacts", "sheep-store", "dist", "public"),
+  path.resolve(process.cwd(), "artifacts", "sheep-store", "dist", "public"),
+];
+
+let frontendDistPath: string | null = null;
+for (const p of possiblePaths) {
+  if (fs.existsSync(path.join(p, "index.html"))) {
+    frontendDistPath = p;
+    break;
+  }
+}
+
+// Fallback
+if (!frontendDistPath) {
+  frontendDistPath = path.resolve(__dirname, "sheep-store", "dist", "public");
+}
+
+logger.info({ frontendDistPath }, "Frontend path resolved");
 
 app.use(
   pinoHttp({
@@ -60,6 +81,7 @@ app.use((req, res, next) => {
   }
   res.sendFile(path.join(frontendDistPath, "index.html"), (err) => {
     if (err) {
+      logger.error({ err, frontendDistPath }, "Failed to send index.html");
       res.status(404).send("Frontend not built. Run 'pnpm run build' first.");
     }
   });

@@ -3,12 +3,40 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { rm, copyFile, mkdir, readdir, stat } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+
+// Copy sheep-store dist to api-server dist for serving
+async function copySheepStore() {
+  const rootDir = path.resolve(artifactDir, "..", "..");
+  const sheepStoreDist = path.resolve(rootDir, "artifacts", "sheep-store", "dist", "public");
+  const targetDir = path.resolve(artifactDir, "dist", "sheep-store", "dist", "public");
+  
+  async function copyDir(src, dest) {
+    await mkdir(dest, { recursive: true });
+    const entries = await readdir(src, { withFileTypes: true });
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      if (entry.isDirectory()) {
+        await copyDir(srcPath, destPath);
+      } else {
+        await copyFile(srcPath, destPath);
+      }
+    }
+  }
+
+  try {
+    await copyDir(sheepStoreDist, targetDir);
+    console.log("Copied sheep-store dist to api-server");
+  } catch (err) {
+    console.warn("Could not copy sheep-store:", err.message);
+  }
+}
 
 async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
@@ -118,6 +146,9 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+
+  // Copy sheep-store dist for serving
+  await copySheepStore();
 }
 
 buildAll().catch((err) => {
