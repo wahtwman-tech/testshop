@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useHealthCheck } from '@workspace/api-client-react';
-import { Store, ListOrdered, Activity, CheckCircle2, AlertCircle, Menu, X, User, MapPin, UserCircle } from 'lucide-react';
+import { Store, ListOrdered, Activity, CheckCircle2, AlertCircle, Menu, X, User, MapPin, UserCircle, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -61,6 +61,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="md:hidden border-t border-border bg-card animate-in slide-in-from-top-2 duration-200">
             <nav className="container mx-auto px-4 py-4 space-y-2">
               <Link 
+                href="/" 
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                  location === '/' 
+                    ? "bg-primary/10 text-primary" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Home className="w-5 h-5" />
+                <span className="font-medium">الرئيسية</span>
+              </Link>
+
+              <Link 
                 href="/orders" 
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
@@ -109,7 +122,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <footer className="border-t border-border bg-card text-muted-foreground py-8 mt-auto">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-          <p>© {new Date().getFullYear()}   هذا المتجر تجريبي وليس حقيقي</p>
+          <p>© {new Date().getFullYear()}    هذا المتجر تجريبي وليس حقيقي</p>
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1">
               حالة النظام: 
