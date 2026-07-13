@@ -1,17 +1,23 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useHealthCheck } from '@workspace/api-client-react';
-import { Store, ListOrdered, Activity, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Store, ListOrdered, Activity, CheckCircle2, AlertCircle, Menu, X, User, MapPin, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { data: health, isError } = useHealthCheck({ query: { queryKey: ['health'] } });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.dir = 'rtl';
     document.documentElement.lang = 'ar';
   }, []);
+
+  // Close menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
@@ -35,7 +41,66 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             </nav>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 rounded-md hover:bg-muted transition-colors"
+            aria-label="القائمة"
+          >
+            {isMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-border bg-card animate-in slide-in-from-top-2 duration-200">
+            <nav className="container mx-auto px-4 py-4 space-y-2">
+              <Link 
+                href="/orders" 
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                  location === '/orders' 
+                    ? "bg-primary/10 text-primary" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <ListOrdered className="w-5 h-5" />
+                <span className="font-medium">طلباتي</span>
+              </Link>
+              
+              <Link 
+                href="/profile" 
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                  location === '/profile' 
+                    ? "bg-primary/10 text-primary" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <UserCircle className="w-5 h-5" />
+                <span className="font-medium">الملف الشخصي</span>
+              </Link>
+
+              <Link 
+                href="/profile?tab=addresses" 
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                  location.includes('addresses') 
+                    ? "bg-primary/10 text-primary" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <MapPin className="w-5 h-5" />
+                <span className="font-medium">عناويني</span>
+              </Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-8">
